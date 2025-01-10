@@ -25,7 +25,6 @@ import (
 	"github.com/go-task/task/v3"
 	"github.com/go-task/task/v3/errors"
 	"github.com/go-task/task/v3/internal/experiments"
-	"github.com/go-task/task/v3/internal/filepathext"
 	"github.com/go-task/task/v3/internal/logger"
 	"github.com/go-task/task/v3/taskfile/ast"
 )
@@ -67,13 +66,13 @@ func (fct fileContentTest) Run(t *testing.T) {
 	t.Helper()
 
 	for f := range fct.Files {
-		_ = os.Remove(filepathext.SmartJoin(fct.Dir, f))
+		_ = os.Remove(filepath.Join(fct.Dir, f))
 	}
 	e := &task.Executor{
 		Dir: fct.Dir,
 		TempDir: task.TempDir{
-			Remote:      filepathext.SmartJoin(fct.Dir, ".task"),
-			Fingerprint: filepathext.SmartJoin(fct.Dir, ".task"),
+			Remote:      filepath.Join(fct.Dir, ".task"),
+			Fingerprint: filepath.Join(fct.Dir, ".task"),
 		},
 		Entrypoint: fct.Entrypoint,
 		Stdout:     io.Discard,
@@ -84,7 +83,7 @@ func (fct fileContentTest) Run(t *testing.T) {
 	require.NoError(t, e.Run(context.Background(), &ast.Call{Task: fct.Target}), "e.Run(target)")
 	for name, expectContent := range fct.Files {
 		t.Run(fct.name(name), func(t *testing.T) {
-			path := filepathext.SmartJoin(e.Dir, name)
+			path := filepath.Join(e.Dir, name)
 			b, err := os.ReadFile(path)
 			require.NoError(t, err, "Error reading file")
 			s := string(b)
@@ -324,7 +323,7 @@ func TestDeps(t *testing.T) {
 	}
 
 	for _, f := range files {
-		_ = os.Remove(filepathext.SmartJoin(dir, f))
+		_ = os.Remove(filepath.Join(dir, f))
 	}
 
 	e := &task.Executor{
@@ -336,7 +335,7 @@ func TestDeps(t *testing.T) {
 	require.NoError(t, e.Run(context.Background(), &ast.Call{Task: "default"}))
 
 	for _, f := range files {
-		f = filepathext.SmartJoin(dir, f)
+		f = filepath.Join(dir, f)
 		if _, err := os.Stat(f); err != nil {
 			t.Errorf("File %s should exist", f)
 		}
@@ -355,7 +354,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	for _, f := range files {
-		path := filepathext.SmartJoin(dir, f)
+		path := filepath.Join(dir, f)
 		_ = os.Remove(path)
 		if _, err := os.Stat(path); err == nil {
 			t.Errorf("File should not exist: %v", err)
@@ -366,8 +365,8 @@ func TestStatus(t *testing.T) {
 	e := &task.Executor{
 		Dir: dir,
 		TempDir: task.TempDir{
-			Remote:      filepathext.SmartJoin(dir, ".task"),
-			Fingerprint: filepathext.SmartJoin(dir, ".task"),
+			Remote:      filepath.Join(dir, ".task"),
+			Fingerprint: filepath.Join(dir, ".task"),
 		},
 		Stdout: &buff,
 		Stderr: &buff,
@@ -386,7 +385,7 @@ func TestStatus(t *testing.T) {
 	require.NoError(t, e.Run(context.Background(), &ast.Call{Task: "gen-silent-baz"}))
 
 	for _, f := range files {
-		if _, err := os.Stat(filepathext.SmartJoin(dir, f)); err != nil {
+		if _, err := os.Stat(filepath.Join(dir, f)); err != nil {
 			t.Errorf("File should exist: %v", err)
 		}
 	}
@@ -402,7 +401,7 @@ func TestStatus(t *testing.T) {
 
 	// Now, let's remove source file, and run the task again to to prepare
 	// for the next test.
-	err := os.Remove(filepathext.SmartJoin(dir, "bar.txt"))
+	err := os.Remove(filepath.Join(dir, "bar.txt"))
 	require.NoError(t, err)
 	require.NoError(t, e.Run(context.Background(), &ast.Call{Task: "gen-bar"}))
 	buff.Reset()
@@ -499,10 +498,10 @@ func TestGenerates(t *testing.T) {
 		fileWithSpaces = "my text file.txt"
 	)
 
-	srcFile := filepathext.SmartJoin(dir, srcTask)
+	srcFile := filepath.Join(dir, srcTask)
 
 	for _, task := range []string{srcTask, relTask, absTask, fileWithSpaces} {
-		path := filepathext.SmartJoin(dir, task)
+		path := filepath.Join(dir, task)
 		_ = os.Remove(path)
 		if _, err := os.Stat(path); err == nil {
 			t.Errorf("File should not exist: %v", err)
@@ -518,7 +517,7 @@ func TestGenerates(t *testing.T) {
 	require.NoError(t, e.Setup())
 
 	for _, theTask := range []string{relTask, absTask, fileWithSpaces} {
-		destFile := filepathext.SmartJoin(dir, theTask)
+		destFile := filepath.Join(dir, theTask)
 		upToDate := fmt.Sprintf("task: Task \"%s\" is up to date\n", srcTask) +
 			fmt.Sprintf("task: Task \"%s\" is up to date\n", theTask)
 
@@ -560,16 +559,16 @@ func TestStatusChecksum(t *testing.T) { // nolint:paralleltest // cannot run in 
 	for _, test := range tests { // nolint:paralleltest // cannot run in parallel
 		t.Run(test.task, func(t *testing.T) {
 			for _, f := range test.files {
-				_ = os.Remove(filepathext.SmartJoin(dir, f))
+				_ = os.Remove(filepath.Join(dir, f))
 
-				_, err := os.Stat(filepathext.SmartJoin(dir, f))
+				_, err := os.Stat(filepath.Join(dir, f))
 				require.Error(t, err)
 			}
 
 			var buff bytes.Buffer
 			tempdir := task.TempDir{
-				Remote:      filepathext.SmartJoin(dir, ".task"),
-				Fingerprint: filepathext.SmartJoin(dir, ".task"),
+				Remote:      filepath.Join(dir, ".task"),
+				Fingerprint: filepath.Join(dir, ".task"),
 			}
 			e := task.Executor{
 				Dir:     dir,
@@ -581,13 +580,13 @@ func TestStatusChecksum(t *testing.T) { // nolint:paralleltest // cannot run in 
 
 			require.NoError(t, e.Run(context.Background(), &ast.Call{Task: test.task}))
 			for _, f := range test.files {
-				_, err := os.Stat(filepathext.SmartJoin(dir, f))
+				_, err := os.Stat(filepath.Join(dir, f))
 				require.NoError(t, err)
 			}
 
 			// Capture the modification time, so we can ensure the checksum file
 			// is not regenerated when the hash hasn't changed.
-			s, err := os.Stat(filepathext.SmartJoin(tempdir.Fingerprint, "checksum/"+test.task))
+			s, err := os.Stat(filepath.Join(tempdir.Fingerprint, "checksum/"+test.task))
 			require.NoError(t, err)
 			time := s.ModTime()
 
@@ -595,7 +594,7 @@ func TestStatusChecksum(t *testing.T) { // nolint:paralleltest // cannot run in 
 			require.NoError(t, e.Run(context.Background(), &ast.Call{Task: test.task}))
 			assert.Equal(t, `task: Task "`+test.task+`" is up to date`+"\n", buff.String())
 
-			s, err = os.Stat(filepathext.SmartJoin(tempdir.Fingerprint, "checksum/"+test.task))
+			s, err = os.Stat(filepath.Join(tempdir.Fingerprint, "checksum/"+test.task))
 			require.NoError(t, err)
 			assert.Equal(t, time, s.ModTime())
 		})
@@ -607,7 +606,7 @@ func TestAlias(t *testing.T) {
 
 	const dir = "testdata/alias"
 
-	data, err := os.ReadFile(filepathext.SmartJoin(dir, "alias.txt"))
+	data, err := os.ReadFile(filepath.Join(dir, "alias.txt"))
 	require.NoError(t, err)
 
 	var buff bytes.Buffer
@@ -642,7 +641,7 @@ func TestAliasSummary(t *testing.T) {
 
 	const dir = "testdata/alias"
 
-	data, err := os.ReadFile(filepathext.SmartJoin(dir, "alias-summary.txt"))
+	data, err := os.ReadFile(filepath.Join(dir, "alias-summary.txt"))
 	require.NoError(t, err)
 
 	var buff bytes.Buffer
@@ -948,15 +947,15 @@ func TestStatusVariables(t *testing.T) {
 
 	const dir = "testdata/status_vars"
 
-	_ = os.RemoveAll(filepathext.SmartJoin(dir, ".task"))
-	_ = os.Remove(filepathext.SmartJoin(dir, "generated.txt"))
+	_ = os.RemoveAll(filepath.Join(dir, ".task"))
+	_ = os.Remove(filepath.Join(dir, "generated.txt"))
 
 	var buff bytes.Buffer
 	e := task.Executor{
 		Dir: dir,
 		TempDir: task.TempDir{
-			Remote:      filepathext.SmartJoin(dir, ".task"),
-			Fingerprint: filepathext.SmartJoin(dir, ".task"),
+			Remote:      filepath.Join(dir, ".task"),
+			Fingerprint: filepath.Join(dir, ".task"),
 		},
 		Stdout:  &buff,
 		Stderr:  &buff,
@@ -968,7 +967,7 @@ func TestStatusVariables(t *testing.T) {
 
 	assert.Contains(t, buff.String(), "3e464c4b03f4b65d740e1e130d4d108a")
 
-	inf, err := os.Stat(filepathext.SmartJoin(dir, "source.txt"))
+	inf, err := os.Stat(filepath.Join(dir, "source.txt"))
 	require.NoError(t, err)
 	ts := fmt.Sprintf("%d", inf.ModTime().Unix())
 	tf := inf.ModTime().String()
@@ -982,14 +981,14 @@ func TestCmdsVariables(t *testing.T) {
 
 	const dir = "testdata/cmds_vars"
 
-	_ = os.RemoveAll(filepathext.SmartJoin(dir, ".task"))
+	_ = os.RemoveAll(filepath.Join(dir, ".task"))
 
 	var buff bytes.Buffer
 	e := task.Executor{
 		Dir: dir,
 		TempDir: task.TempDir{
-			Remote:      filepathext.SmartJoin(dir, ".task"),
-			Fingerprint: filepathext.SmartJoin(dir, ".task"),
+			Remote:      filepath.Join(dir, ".task"),
+			Fingerprint: filepath.Join(dir, ".task"),
 		},
 		Stdout:  &buff,
 		Stderr:  &buff,
@@ -1001,7 +1000,7 @@ func TestCmdsVariables(t *testing.T) {
 
 	assert.Contains(t, buff.String(), "3e464c4b03f4b65d740e1e130d4d108a")
 
-	inf, err := os.Stat(filepathext.SmartJoin(dir, "source.txt"))
+	inf, err := os.Stat(filepath.Join(dir, "source.txt"))
 	require.NoError(t, err)
 	ts := fmt.Sprintf("%d", inf.ModTime().Unix())
 	tf := inf.ModTime().String()
@@ -1014,7 +1013,7 @@ func TestInit(t *testing.T) {
 	t.Parallel()
 
 	const dir = "testdata/init"
-	file := filepathext.SmartJoin(dir, "Taskfile.yml")
+	file := filepath.Join(dir, "Taskfile.yml")
 
 	_ = os.Remove(file)
 	if _, err := os.Stat(file); err == nil {
@@ -1123,7 +1122,7 @@ func TestDry(t *testing.T) {
 
 	const dir = "testdata/dry"
 
-	file := filepathext.SmartJoin(dir, "file.txt")
+	file := filepath.Join(dir, "file.txt")
 	_ = os.Remove(file)
 
 	var buff bytes.Buffer
@@ -1150,14 +1149,14 @@ func TestDryChecksum(t *testing.T) {
 
 	const dir = "testdata/dry_checksum"
 
-	checksumFile := filepathext.SmartJoin(dir, ".task/checksum/default")
+	checksumFile := filepath.Join(dir, ".task/checksum/default")
 	_ = os.Remove(checksumFile)
 
 	e := task.Executor{
 		Dir: dir,
 		TempDir: task.TempDir{
-			Remote:      filepathext.SmartJoin(dir, ".task"),
-			Fingerprint: filepathext.SmartJoin(dir, ".task"),
+			Remote:      filepath.Join(dir, ".task"),
+			Fingerprint: filepath.Join(dir, ".task"),
 		},
 		Stdout: io.Discard,
 		Stderr: io.Discard,
@@ -1883,7 +1882,7 @@ func TestSummary(t *testing.T) {
 	require.NoError(t, e.Setup())
 	require.NoError(t, e.Run(context.Background(), &ast.Call{Task: "task-with-summary"}, &ast.Call{Task: "other-task-with-summary"}))
 
-	data, err := os.ReadFile(filepathext.SmartJoin(dir, "task-with-summary.txt"))
+	data, err := os.ReadFile(filepath.Join(dir, "task-with-summary.txt"))
 	require.NoError(t, err)
 
 	expectedOutput := string(data)
@@ -2655,7 +2654,7 @@ func TestUserWorkingDirectoryWithIncluded(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 
-	wd = filepathext.SmartJoin(wd, "testdata/user_working_dir_with_includes/somedir")
+	wd = filepath.Join(wd, "testdata/user_working_dir_with_includes/somedir")
 
 	var buff bytes.Buffer
 	e := task.Executor{

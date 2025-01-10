@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-task/task/v3/internal/execext"
@@ -53,7 +54,7 @@ func (node *StdinNode) ResolveEntrypoint(entrypoint string) (string, error) {
 		return "", err
 	}
 
-	if filepathext.IsAbs(path) {
+	if filepath.IsAbs(path) {
 		return path, nil
 	}
 
@@ -66,7 +67,7 @@ func (node *StdinNode) ResolveDir(dir string) (string, error) {
 		return "", err
 	}
 
-	if filepathext.IsAbs(path) {
+	if filepath.IsAbs(path) {
 		return path, nil
 	}
 

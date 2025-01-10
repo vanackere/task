@@ -90,7 +90,7 @@ func (node *FileNode) ResolveEntrypoint(entrypoint string) (string, error) {
 		return "", err
 	}
 
-	if filepathext.IsAbs(path) {
+	if filepath.IsAbs(path) {
 		return path, nil
 	}
 
@@ -106,7 +106,7 @@ func (node *FileNode) ResolveDir(dir string) (string, error) {
 		return "", err
 	}
 
-	if filepathext.IsAbs(path) {
+	if filepath.IsAbs(path) {
 		return path, nil
 	}
 

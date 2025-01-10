@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/go-task/task/v3/errors"
-	"github.com/go-task/task/v3/internal/filepathext"
 )
 
 const defaultTaskfile = `# https://taskfile.dev
@@ -27,7 +27,7 @@ const defaultTaskfileName = "Taskfile.yml"
 
 // InitTaskfile Taskfile creates a new Taskfile
 func InitTaskfile(w io.Writer, dir string) error {
-	f := filepathext.SmartJoin(dir, defaultTaskfileName)
+	f := filepath.Join(dir, defaultTaskfileName)
 
 	if _, err := os.Stat(f); err == nil {
 		return errors.TaskfileAlreadyExistsError{}

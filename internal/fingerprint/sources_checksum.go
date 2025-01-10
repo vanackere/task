@@ -80,7 +80,7 @@ func (checker *ChecksumChecker) SetUpToDate(t *ast.Task, sourceHash string) erro
 		return err
 	}
 
-	_ = os.MkdirAll(filepathext.SmartJoin(checker.tempDir, "checksum"), 0o755)
+	_ = os.MkdirAll(filepath.Join(checker.tempDir, "checksum"), 0o755)
 	if err = os.WriteFile(checksumFile, []byte(newSourcesHash+"\n"+newGeneratesHash+"\n"), 0o644); err != nil {
 		return err
 	}

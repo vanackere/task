@@ -104,7 +104,7 @@ func (node *HTTPNode) ResolveDir(dir string) (string, error) {
 		return "", err
 	}
 
-	if filepathext.IsAbs(path) {
+	if filepath.IsAbs(path) {
 		return path, nil
 	}
 
