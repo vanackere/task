@@ -95,11 +95,16 @@ func (c *Compiler) getVariables(t *ast.Task, call *ast.Call, evaluateShVars bool
 		// NOTE(@andreynering): We're manually joining these paths here because
 		// this is the raw task, not the compiled one.
 		cache := &templater.Cache{Vars: result}
-		dir := templater.Replace(t.Dir, cache)
+		dirs := append([]string{c.Dir}, t.Dirs...)
+		for i, dir := range dirs {
+			if i > 0 {
+				dirs[i] = templater.Replace(dir, cache)
+			}
+		}
 		if err := cache.Err(); err != nil {
 			return nil, err
 		}
-		dir = filepathext.SmartJoin(c.Dir, dir)
+		dir := filepathext.JoinDirs(dirs)
 		taskRangeFunc = getRangeFunc(dir)
 	}
 
@@ -194,7 +199,7 @@ func (c *Compiler) getSpecialVars(t *ast.Task, call *ast.Call) (map[string]strin
 	}
 	if t != nil {
 		allVars["TASK"] = t.Task
-		allVars["TASK_DIR"] = filepathext.SmartJoin(c.Dir, t.Dir)
+		allVars["TASK_DIR"] = filepathext.JoinDirs(append([]string{c.Dir}, t.Dirs...))
 		allVars["TASKFILE"] = t.Location.Taskfile
 		allVars["TASKFILE_DIR"] = filepath.Dir(t.Location.Taskfile)
 	}

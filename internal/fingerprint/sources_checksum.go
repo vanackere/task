@@ -109,7 +109,8 @@ func (*ChecksumChecker) Kind() string {
 }
 
 func (c *ChecksumChecker) checksum(t *ast.Task, globs []*ast.Glob) (string, error) {
-	sources, err := Globs(t.Dir, globs)
+	dir := t.ComputeDir()
+	sources, err := Globs(dir, globs)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +119,7 @@ func (c *ChecksumChecker) checksum(t *ast.Task, globs []*ast.Glob) (string, erro
 	buf := make([]byte, 128*1024)
 	for _, f := range sources {
 		// also sum the filename, so checksum changes for renaming a file
-		if rel, err := filepath.Rel(t.Dir, f); err == nil {
+		if rel, err := filepath.Rel(dir, f); err == nil {
 			h.WriteString(rel)
 		} else {
 			// couldn't make a relative path, use the full path to be safe

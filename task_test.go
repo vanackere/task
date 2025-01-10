@@ -1444,7 +1444,7 @@ func TestIncludesHttp(t *testing.T) {
 						t.Run(tc.name, func(t *testing.T) {
 							task, err := e.CompiledTask(&ast.Call{Task: tc.name})
 							require.NoError(t, err)
-							assert.Equal(t, tc.dir, task.Dir)
+							assert.Equal(t, tc.dir, task.ComputeDir())
 						})
 					}
 				})

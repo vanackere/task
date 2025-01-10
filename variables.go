@@ -54,7 +54,7 @@ func (e *Executor) compiledTask(call *ast.Call, evaluateShVars bool) (*ast.Task,
 		Aliases:              origTask.Aliases,
 		Sources:              templater.ReplaceGlobs(origTask.Sources, cache),
 		Generates:            templater.ReplaceGlobs(origTask.Generates, cache),
-		Dir:                  templater.Replace(origTask.Dir, cache),
+		Dirs:                 templater.Replace(origTask.Dirs, cache),
 		Set:                  origTask.Set,
 		Shopt:                origTask.Shopt,
 		Vars:                 vars,
@@ -75,12 +75,15 @@ func (e *Executor) compiledTask(call *ast.Call, evaluateShVars bool) (*ast.Task,
 		Watch:                origTask.Watch,
 		Namespace:            origTask.Namespace,
 	}
-	new.Dir, err = execext.Expand(new.Dir)
-	if err != nil {
-		return nil, err
+	for i := range new.Dirs {
+		new.Dirs[i], err = execext.Expand(new.Dirs[i])
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	if e.Dir != "" {
-		new.Dir = filepathext.SmartJoin(e.Dir, new.Dir)
+		new.Dirs = append([]string{e.Dir}, new.Dirs...)
 	}
 	if new.Prefix == "" {
 		new.Prefix = new.Task
@@ -89,7 +92,7 @@ func (e *Executor) compiledTask(call *ast.Call, evaluateShVars bool) (*ast.Task,
 	dotenvEnvs := ast.NewVars()
 	if len(new.Dotenv) > 0 {
 		for _, dotEnvPath := range new.Dotenv {
-			dotEnvPath = filepathext.SmartJoin(new.Dir, dotEnvPath)
+			dotEnvPath = filepathext.JoinDirs(append(new.Dirs, dotEnvPath))
 			if _, err := os.Stat(dotEnvPath); os.IsNotExist(err) {
 				continue
 			}
@@ -116,7 +119,7 @@ func (e *Executor) compiledTask(call *ast.Call, evaluateShVars bool) (*ast.Task,
 				new.Env.Set(k, ast.Var{Value: v.Value})
 				return nil
 			}
-			static, err := e.Compiler.HandleDynamicVar(v, new.Dir, env.GetFromVars(new.Env))
+			static, err := e.Compiler.HandleDynamicVar(v, new.ComputeDir(), env.GetFromVars(new.Env))
 			if err != nil {
 				return err
 			}
@@ -152,7 +155,7 @@ func (e *Executor) compiledTask(call *ast.Call, evaluateShVars bool) (*ast.Task,
 				continue
 			}
 			if cmd.For != nil {
-				list, keys, err := itemsFromFor(cmd.For, new.Dir, new.Sources, vars, origTask.Location)
+				list, keys, err := itemsFromFor(cmd.For, new.ComputeDir(), new.Sources, vars, origTask.Location)
 				if err != nil {
 					return nil, err
 				}
@@ -199,7 +202,7 @@ func (e *Executor) compiledTask(call *ast.Call, evaluateShVars bool) (*ast.Task,
 				continue
 			}
 			if dep.For != nil {
-				list, keys, err := itemsFromFor(dep.For, new.Dir, new.Sources, vars, origTask.Location)
+				list, keys, err := itemsFromFor(dep.For, new.ComputeDir(), new.Sources, vars, origTask.Location)
 				if err != nil {
 					return nil, err
 				}

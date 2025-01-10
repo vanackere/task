@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-task/task/v3/errors"
 	"github.com/go-task/task/v3/internal/deepcopy"
+	"github.com/go-task/task/v3/internal/filepathext"
 )
 
 // Task represents a task
@@ -26,7 +27,7 @@ type Task struct {
 	Generates     []*Glob
 	Status        []string
 	Preconditions []*Precondition
-	Dir           string
+	Dirs          []string
 	Set           []string
 	Shopt         []string
 	Vars          *Vars
@@ -46,6 +47,10 @@ type Task struct {
 	Namespace            string
 	IncludeVars          *Vars
 	IncludedTaskfileVars *Vars
+}
+
+func (t *Task) ComputeDir() string {
+	return filepathext.JoinDirs(t.Dirs)
 }
 
 func (t *Task) Name() string {
@@ -160,7 +165,9 @@ func (t *Task) UnmarshalYAML(node *yaml.Node) error {
 		t.Generates = task.Generates
 		t.Status = task.Status
 		t.Preconditions = task.Preconditions
-		t.Dir = task.Dir
+		if task.Dir != "" {
+			t.Dirs = []string{task.Dir}
+		}
 		t.Set = task.Set
 		t.Shopt = task.Shopt
 		t.Vars = task.Vars
@@ -201,7 +208,7 @@ func (t *Task) DeepCopy() *Task {
 		Generates:            deepcopy.Slice(t.Generates),
 		Status:               deepcopy.Slice(t.Status),
 		Preconditions:        deepcopy.Slice(t.Preconditions),
-		Dir:                  t.Dir,
+		Dirs:                 deepcopy.Slice(t.Dirs),
 		Set:                  deepcopy.Slice(t.Set),
 		Shopt:                deepcopy.Slice(t.Shopt),
 		Vars:                 t.Vars.DeepCopy(),

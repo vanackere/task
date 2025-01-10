@@ -10,7 +10,6 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/go-task/task/v3/errors"
-	"github.com/go-task/task/v3/internal/filepathext"
 )
 
 type (
@@ -203,7 +202,7 @@ func (t1 *Tasks) Merge(t2 *Tasks, include *Include, includedTaskfileVars *Vars) 
 		}
 
 		if include.AdvancedImport {
-			task.Dir = filepathext.SmartJoin(include.Dir, task.Dir)
+			task.Dirs = append([]string{include.Dir}, task.Dirs...)
 			if task.IncludeVars == nil {
 				task.IncludeVars = NewVars()
 			}

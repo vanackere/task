@@ -6,6 +6,15 @@ import (
 	"strings"
 )
 
+func JoinDirs(dirs []string) string {
+	for i := len(dirs) - 1; i >= 0; i-- {
+		if i == 0 || filepath.IsAbs(dirs[i]) {
+			return filepath.Join(dirs[i:]...)
+		}
+	}
+	return ""
+}
+
 // SmartJoin joins two paths, but only if the second is not already an
 // absolute path.
 func SmartJoin(a, b string) string {

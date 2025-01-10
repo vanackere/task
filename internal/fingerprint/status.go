@@ -23,7 +23,7 @@ func (checker *StatusChecker) IsUpToDate(ctx context.Context, t *ast.Task) (bool
 	for _, s := range t.Status {
 		err := execext.RunCommand(ctx, &execext.RunCommandOptions{
 			Command: s,
-			Dir:     t.Dir,
+			Dir:     t.ComputeDir(),
 			Env:     env.Get(t),
 		})
 		if err != nil {

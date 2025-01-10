@@ -28,11 +28,13 @@ func (checker *TimestampChecker) IsUpToDate(t *ast.Task) (bool, string, error) {
 		return false, "", nil
 	}
 
-	sources, err := Globs(t.Dir, t.Sources)
+	dir := t.ComputeDir()
+
+	sources, err := Globs(dir, t.Sources)
 	if err != nil {
 		return false, "", nil
 	}
-	generates, err := Globs(t.Dir, t.Generates)
+	generates, err := Globs(dir, t.Generates)
 	if err != nil {
 		return false, "", nil
 	}
@@ -94,7 +96,7 @@ func (checker *TimestampChecker) Kind() string {
 
 // Value implements the Checker Interface
 func (checker *TimestampChecker) Value(t *ast.Task) (any, error) {
-	sources, err := Globs(t.Dir, t.Sources)
+	sources, err := Globs(t.ComputeDir(), t.Sources)
 	if err != nil {
 		return time.Now(), err
 	}
